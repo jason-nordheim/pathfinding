@@ -12,19 +12,22 @@ class Grid {
     /**
      * The starting node 
      */
-    private _start: GridNode; 
+    private _start: GridNode | null | undefined = null; 
     public get start(){
+        if (!this._start) throw Error('No start node set')
         return this._start; 
     }
     public set start(sNode: GridNode){
         this._start = sNode; 
     }
 
+
     /**
      * The ending node 
      */
-    private _end: GridNode; 
+    private _end: GridNode | null | undefined = null;
     public get end(){
+        if (!this._end) throw Error('No start node set')
         return this._end; 
     }
     public set end(sNode: GridNode){
@@ -60,8 +63,9 @@ class GridNode {
     /**
      * Position of a node on a grid 
      */
-    private _position:Position = null 
+    private _position:Position | null = null 
     public get position(){
+        if(!this._position) throw new Error('position is null')
         return this._position
     }
     public set position(pos:Position){
@@ -70,34 +74,36 @@ class GridNode {
 
     /**
      * The manhattan distance from current node 
-     * back to the starting node 
+     * back to the starting node. defaults to infinity 
      */
-    private _distanceFromStart: number = Infinity
-    public get distanceFromStart() {
-        return this._distanceFromStart
+    
+    private _distance : number = 0; 
+    public get distance() : number {
+        return this._distance;
     }
-    public set distanceFromStart(dist:number){
-        this._distanceFromStart = dist
-    }
-
-
-    /**
-     * The node from from which the path came from
-     */
-    private _pathFrom: GridNode = null; 
-    public get pathFrom(){
-        return this._pathFrom; 
-    }
-    public set pathFrom(node:GridNode){
-        this._pathFrom = node; 
+    public set distance(v : number) {
+        this._distance = v;
     }
 
-    private _type: GridNodeType
+    // /**
+    //  * The node from from which the path came from
+    //  */
+    // private _pathFrom: GridNode | null = null; 
+    // public get pathFrom(){
+    //     if(!this._pathFrom) throw new Error('pathFrom is null')
+    //     return this._pathFrom; 
+    // }
+    // public set pathFrom(node:GridNode){
+    //     this._pathFrom = node; 
+    // }
+
+    private _type: GridNodeType | null = null; 
     public get type(){
+        if(!this._type) throw new Error('pathFrom is null')
         return this._type; 
     }
-    public set type(){
-        return this._type; 
+    public set type(type:GridNodeType){
+        this._type = type;  
     }
 
 }
@@ -112,6 +118,25 @@ class Position {
 }
 
 
-export default function dijstra() {
+export default function dijstra(grid: Grid) {
+    const unvisitedNodes = [...grid.nodes] 
+    const visitedNodes = new Array<GridNode>(); 
+    while(!!unvisitedNodes.length){
+        sortNodesByDistance(unvisitedNodes)
+    }
+}
 
+function sortNodesByDistance(nodes:Array<GridNode>){
+    throw new Error('Not implemented')
+}
+
+/**
+ * Gets the distance between two GridNode objects 
+ * @param nodeA 
+ * @param nodeB 
+ */
+function getDistance(nodeA:GridNode, nodeB:GridNode):number{
+    const x = Math.abs(nodeA.position.x - nodeB.position.x)
+    const y = Math.abs(nodeA.position.y -nodeB.position.y) 
+    return x + y 
 }
