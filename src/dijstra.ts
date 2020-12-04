@@ -1,3 +1,4 @@
+import { start } from "repl";
 
 export class Grid {
     constructor(rows:number, columns:number){
@@ -7,8 +8,8 @@ export class Grid {
         this._columns = Math.floor(columns) 
         this._start = null; 
         this._end = null;
-        this._visited = new Array<GridNode>() 
-        this._unvisited = new Array<GridNode>() 
+        this.visited = new Array<GridNode>() 
+        this.unvisited = new Array<GridNode>() 
         this.buildGrid(this.rows, this.columns)
     }
     protected buildGrid(rows:number, columns:number): void {
@@ -16,26 +17,21 @@ export class Grid {
         while(x < rows){
             while(y < columns){
                 this._nodes[x][y] = new GridNode(x, y, this.rows, this.columns) 
-                this._unvisited.push(this._nodes[x][y])
+                this.unvisited.push(this._nodes[x][y])
                 y++; 
             }
             x++; 
         }
     }
     protected reset() {
-        this._visited = new Array<GridNode>() 
-        this._unvisited = new Array<GridNode>() 
+        this.visited = new Array<GridNode>() 
+        this.unvisited = new Array<GridNode>() 
         this.buildGrid(this.rows, this.columns)
     }
 
-    protected _visited:Array<GridNode>
-    protected get visited(){
-        return this._visited
-    }
-    protected _unvisited: Array<GridNode> 
-    protected get unvisited(){
-        return this._unvisited
-    }
+    protected visited:Array<GridNode>
+    protected unvisited: Array<GridNode> 
+   
     protected _rows:number
     public get rows():number{
         return this._rows 
@@ -65,7 +61,7 @@ export class Grid {
         return this._start; 
     }
     public set start(start: GridNode){
-        this._nodes[start.position.x]
+        this._nodes[start.x][start.y] = start; 
         this._start = start; 
     }
 
@@ -74,34 +70,88 @@ export class Grid {
         if (!this._end) throw Error('end node is null')
         return this._end; 
     }
-    public set end(sNode: GridNode){
-        this._end = sNode; 
+    public set end(end: GridNode){
+        this._nodes[end.x][end.y] = end; 
+        this._end = end; 
     }
 
     public getNeighbors(node:GridNode) : Array<GridNode>  {
-        const x = node.x, y = node.y
         const neighbors = new Array<GridNode>(); 
-        if (x + 1 < this.rows  && this.nodes[x][y]) {
 
-        }
+        const up = this.up(node)
+        !!up && neighbors.push(up) 
+        const down = this.down(node) 
+        !!down && neighbors.push(down) 
+        const right = this.right(node)
+        !!right && neighbors.push(right) 
+        const left = this.left(node) 
+        !!left && neighbors.push(left) 
+
         return neighbors; 
     }
 
-    protected distanceBetween(nodeA:GridNode, nodeB:GridNode):number {
+    protected up(node:GridNode): GridNode | void {
+        const x = node.x + 1, y = node.y 
+        if (x < this.columns && this.nodes[x][y]) {
+            return this.nodes[x][y]
+        }
+    }
+
+    protected down(node:GridNode): GridNode | void {
+        const x = node.x - 1, y = node.y 
+        if (x > 0 && this.nodes[x][y]) {
+            return this.nodes[x][y]
+        }
+    }
+
+    protected right(node:GridNode): GridNode | void {
+        const x = node.x, y = node.y + 1 
+        if (y < this.columns && this.nodes[x][y]) {
+            return this.nodes[x][y]
+        }
+    }
+
+    protected left(node:GridNode): GridNode | void {
+        const x = node.x, y = node.y - 1 
+        if (y > 0 && this.nodes[x][y]) {
+            return this.nodes[x][y]
+        }
+    }
+
+    protected distance(nodeA:GridNode, nodeB:GridNode):number {
         if(nodeA.x === nodeB.x && nodeB.y === nodeB.y) return 0 
         const x = Math.abs(nodeA.x - nodeB.x)
         const y = Math.abs(nodeA.y -nodeB.y) 
         return x + y 
     }
 
-    protected sortUnvisited(nodes:Array<Array<GridNode>>, start:GridNode, end:GridNode){
-
+    protected sort(nodes : Array<GridNode>):Array<GridNode>{
+        if (!this.start) throw new Error('start node is null')
+        if (!this.end) throw new Error('end node is null')
+        const sortedNodes = [...nodes].sort((nodeA, nodeB) => {
+            const distA = this.distance(nodeA, this.start) +  this.distance(nodeA, this.end)
+            const distB = this.distance(nodeB, this.start) +  this.distance(nodeB, this.end)
+            
+            if (distA < distB) return - 1 
+            else if (distB < distA) return 1 
+            else return 0 
+        })
+        return sortedNodes
     }
 
     protected dijstra() {
-        while(!!this._unvisited.length){
-            sortNodesByDistance(this.unvisitedNodes, grid.start, grid.end)
-        }
+        this.unvisited = this.sort(this.unvisited)
+        this.visited = this.sort(this.visited)
+        const node = this.unvisited.shift()
+        while(this.unvisited.length > 0) {
+           if(node && node.visits && node.type !== GridNodeType.barrier){
+               node.visit() 
+               let neighbors = this.getNeighbors(node)
+               neighbors = this.sort(neighbors)
+               for
+               this.visited.push(node)
+           } 
+       }
     }
     
 }
@@ -140,8 +190,15 @@ class GridNode extends GridPosition {
         this._startDistance = Infinity; 
         this._endDistance = Infinity; 
         this._type = GridNodeType.default; 
-        this._visits = 0; 
+        this._visited = false; 
         this._weight = weight ? weight : 1; 
+    }
+    
+    public reset(){
+        this._startDistance = Infinity; 
+        this._endDistance = Infinity; 
+        this._type = GridNodeType.default; 
+        this._visited = false; 
     }
 
     public get distance() : number {
@@ -173,15 +230,14 @@ class GridNode extends GridPosition {
         return this._weight * this.distance; 
     }
 
-    protected _visits : number;
-    public get visits() : number {
-        return this._visits;
+    protected _visited : boolean;
+    public get visited() : boolean {
+        return this._visited;
     }
     public visit(){
-        return this._visits++ 
+        return this._visited = true  
     }
 
-    
     protected _type: GridNodeType; 
     public get type(){
         if(!this._type) throw new Error('pathFrom is null')
