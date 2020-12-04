@@ -1,0 +1,31 @@
+import { GridNode } from "./GridNode";
+export declare class Grid {
+    constructor(rows: number, columns: number);
+    protected buildGrid(rows: number, columns: number): void;
+    protected reset(): void;
+    protected visited: Array<GridNode>;
+    protected unvisited: Array<GridNode>;
+    protected _rows: number;
+    get rows(): number;
+    protected _columns: number;
+    get columns(): number;
+    protected _nodes: Array<Array<GridNode>>;
+    get nodes(): GridNode[][];
+    protected get arrayNodes(): GridNode[];
+    protected _start: GridNode | null;
+    get start(): GridNode;
+    set start(start: GridNode);
+    protected _end: GridNode | null;
+    get end(): GridNode;
+    set end(end: GridNode);
+    getNeighbors(node: GridNode): Array<GridNode>;
+    protected up(node: GridNode): GridNode | void;
+    protected down(node: GridNode): GridNode | void;
+    protected right(node: GridNode): GridNode | void;
+    protected left(node: GridNode): GridNode | void;
+    protected distance(nodeA: GridNode, nodeB: GridNode): number;
+    protected sort(nodes: Array<GridNode>): Array<GridNode>;
+    protected visit(node: GridNode): void;
+    protected visitNeighbors(node: GridNode): void;
+    protected dijstra(): void;
+}
