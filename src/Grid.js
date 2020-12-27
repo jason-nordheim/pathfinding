@@ -1,8 +1,13 @@
 const { GridNode } = require("./GridNode")
 
 class Grid {
+    /**
+     * Creates a grid with the specified number of rows and columns 
+     * @param {number} rows 
+     * @param {number} cols 
+     */
     constructor(rows, cols) {
-        this._start = undefined
+        this._end = undefined
         this._end = undefined
         this._rows = rows
         this._cols = cols
@@ -15,76 +20,125 @@ class Grid {
             }
         }
     }
+    /**
+     * returns the current start row and column in a single object 
+     * @returns {{row: {number}, col:{ number}}}
+     */
     get start() {
-        return this._start
+        return this._end
     }
+    /**
+     * Sets the start position for the Grid 
+     * @param {number} row 
+     * @param {number} col 
+     */
 
     set start({ row, col }) {
-        if (row > this.rows || row < 0)
-            throw 'Invalid row value for start position'
-        else if (col > this.cols || col < 0)
-            throw 'Invalid column value for start position'
+        this.validateGridPos(row, col)
 
         /* unset start position if there is one */
-        if (this._start) {
-            const p = this.pos(row, col)
-            this._nodes[p].type = 'start'
+        if (this._end) {
+            const p = this.pos(this._end.row, this._end.col)
+            this._nodes[p].type = 'open'
         }
 
-        this._start = { row, col }
+        const p = this.pos(row, col)
+        this._nodes[p].type = 'start'
+
+        this._end = { row, col }
     }
 
     get end() {
         return this._end
     }
-
+    /**
+     * Sets the end position for the Grid 
+     * @param {number} row 
+     * @param {number} col 
+     */
     set end({ row, col }) {
-        if (row > this.rows || row < 0)
-            throw 'Invalid row value for start position'
-        else if (col > this.cols || col < 0)
-            throw 'Invalid column value for start position'
-        else if (this._start && this._start.row === row && this._start.col === col)
-            throw 'end cannot have the same position as the start position'
+        this.validateGridPos(row, col)
 
         /* unset start position if there is one */
         if (this._end) {
-            const p = this.pos(row, col)
-            this._nodes[p].type = 'end'
+            const p = this.pos(this._end.row, this._end.col)
+            this._nodes[p].type = 'open'
         }
+
+        const p = this.pos(row, col)
+        this._nodes[p].type = 'end'
 
         this._end = { row, col }
     }
 
+    /**
+     * returns the number of rows on the grid 
+     * @returns {number} rows
+     */
     get rows() {
         return this._rows
     }
 
+    /**
+     * returns the number of columns on the grid 
+     * @returns {number} cols 
+     */
     get cols() {
         return this._cols
     }
 
+    /**
+     * returns a string representing the key position of a desired node 
+     * @param {number} row 
+     * @param {number} col 
+     * @returns {string} key 
+     */
     pos(row, col) {
         return `${row},${col}`
     }
 
+    /**
+     * adds a wall to the position provided 
+     * @param {{row: {number}, col:{number}}} position 
+     * @returns {boolean} successfully set 
+     */
     addWall({ row, col }) {
-        this.validateGridPos(row, col)
-        const p = this.pos(row, col)
-        this._nodes[p].type = 'wall'
+        const n = this.getNode(row, col)
+        if (n.type !== 'start' && n.type !== 'end') {
+            n.type = 'wall'
+            return true // removal successful 
+        }
+        return false // removal failed 
     }
 
+    /**
+     * removes a wall from the specified position 
+     * @param {{row: {number}, col:{number}}} param0 
+     * @returns {boolean} successfully removed 
+     */
     removeWall({ row, col }) {
-        this.validateGridPos(row, col)
-        const p = this.pos(row, col)
-        this._nodes[p].type = 'open'
+        const n = this.getNode(row, col)
+        if (n.type !== 'start' && n.type !== 'end') {
+            n.type = 'open'
+            return true // removal successful 
+        }
+        return false // removal failed 
     }
 
+    /**
+     * checks to see if the provided row value is valid 
+     * @param {number} r (row) 
+     */
     isValidRow(r) {
         if (r < 1 || r > this.rows)
             return false
         return true
     }
 
+    /**
+     * checks to see if the provided column value is valid 
+     * @param {number} c (column) 
+     */
     isValidCol(c) {
         if (c < 1 || c > this.cols)
             return false
@@ -101,11 +155,26 @@ class Grid {
             throw 'col value is outside of grid'
     }
 
-    getNode(row, col) {
-        this.validateGridPos(row, col)
-
-        const p = this.pos(row, col)
-        return this._nodes[p]
+    /**
+     * validates row position (will throw if invalid) 
+     * and returns the GridNode at the specified position 
+     * @param {number} row 
+     * @param {number} col 
+     * @returns {GridNode | null} node | null if invalid Grid position
+     */
+    getNode(row, col, throwOnError = true) {
+        // by default will throw error if row is invalid 
+        if (throwOnError) {
+            this.validateGridPos(row, col)
+            const p = this.pos(row, col)
+            return this._nodes[p]
+        }
+        // if throw on error is set to false, will return a 
+        // null object instead of a node for an invalid position 
+        if (this.isValidRow(row) && this.isValidCol(col)) {
+            const p = this.pos(row, col)
+            return this._nodes[p]
+        } else return null
     }
 
     /**
@@ -128,12 +197,12 @@ class Grid {
      * returns the node directly above the node at the row and colum provided 
      * @param {number} row 
      * @param {number} col 
-     * @return {GridNode}
+     * @return {GridNode|null}
      */
     getNorth(row, col) {
-        const n = this.getNode(row, col)
+        const n = this.getNode(row + 1, col, false)
+        return n
 
-        throw 'not implemented exception'
     }
 
 
@@ -144,10 +213,8 @@ class Grid {
      * @return {GridNode}
      */
     getEast(row, col) {
-        const n = this.getNode(row, col)
-
-
-        throw 'not implemented exception'
+        const n = this.getNode(row, col + 1, false)
+        return n
     }
 
 
@@ -155,13 +222,11 @@ class Grid {
      * returns the node directly below the node at the row and colum provided 
      * @param {number} row 
      * @param {number} col 
-     * @return {GridNode}
+     * @return {GridNode|null}
      */
     getSouth(row, col) {
-        const n = this.getNode(row, col)
-
-
-        throw 'not implemented exception'
+        const n = this.getNode(row - 1, col, false)
+        return n
     }
 
 
@@ -170,12 +235,11 @@ class Grid {
      * returns the node directly to the left of the node row and column provided 
      * @param {number} row 
      * @param {number} col 
-     * @return {GridNode}
+     * @return {GridNode|null}
      */
     getWest(row, col) {
-        const n = this.getNode(row, col)
-
-        throw 'not implemented exception'
+        const n = this.getNode(row, col - 1, false)
+        return n
     }
 
 }
