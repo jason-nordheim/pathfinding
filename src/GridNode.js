@@ -1,7 +1,12 @@
+const { GridPosition } = require("./GridPosition")
+
 class GridNode {
-    constructor(row, col, type = 'open') {
-        this._row = row
-        this._col = col
+    /**
+     * @param {GridPosition} pos 
+     * @param {string} type 
+     */
+    constructor(pos, type = 'open') {
+        this._pos = pos
         this._type = type
         this._start_dist = Infinity
         this._end_dist = Infinity
@@ -84,8 +89,17 @@ class GridNode {
             throw 'Invalid type'
     }
 
+    /**
+     * @returns {GridPosition}
+     */
     get pos() {
-        return { row: this.row, col: this.col }
+        return this._pos
+    }
+    /**
+     * @returns {string} key
+     */
+    get key() {
+        return this._pos.key
     }
 }
 exports.GridNode = GridNode
