@@ -1,4 +1,5 @@
 const { GridNode } = require("./GridNode")
+const { GridPosition } = require("./GridPosition")
 
 class Grid {
     /**
@@ -8,67 +9,66 @@ class Grid {
      */
     constructor(rows, cols) {
         this._end = undefined
-        this._end = undefined
+        this._start = undefined
         this._rows = rows
         this._cols = cols
         this._nodes = {}
         for (let row = 1; row < rows + 1; row++) {
             for (let col = 1; col < cols + 1; col++) {
-                const n = new GridNode(row, col)
-                const p = this.pos(row, col)
+                const p = new GridPosition(row, col)
+                const n = new GridNode(p)
                 this._nodes[p] = n
             }
         }
     }
     /**
      * returns the current start row and column in a single object 
-     * @returns {{row: {number}, col:{ number}}}
+     * @returns {GridPosition|undefined}
      */
-    get start() {
-        return this._end
-    }
-    /**
-     * Sets the start position for the Grid 
-     * @param {number} row 
-     * @param {number} col 
-     */
-
-    set start({ row, col }) {
-        this.validateGridPos(row, col)
-
-        /* unset start position if there is one */
-        if (this._end) {
-            const p = this.pos(this._end.row, this._end.col)
-            this._nodes[p].type = 'open'
-        }
-
-        const p = this.pos(row, col)
-        this._nodes[p].type = 'start'
-
-        this._end = { row, col }
-    }
-
     get end() {
         return this._end
     }
     /**
      * Sets the end position for the Grid 
-     * @param {number} row 
-     * @param {number} col 
+     * @param {GridPosition} pos 
      */
-    set end({ row, col }) {
-        this.validateGridPos(row, col)
+    set end(pos) {
+        this.validateGridPos(pos.row, pos.col)
 
-        /* unset start position if there is one */
+        /* unset end position if there is one */
         if (this._end) {
-            const p = this.pos(this._end.row, this._end.col)
-            this._nodes[p].type = 'open'
+            this._nodes[this._end.key].type = 'open'
         }
 
-        const p = this.pos(row, col)
-        this._nodes[p].type = 'end'
+        /**  apply end */
+        this._end = pos
+        this._nodes[pos.key].type = 'end'
+    }
 
-        this._end = { row, col }
+    /**
+     * gets the start position of the grid 
+     * @returns {GridPosition|undefined}
+     * @returns {void}
+     */
+    get start() {
+        return this._start
+    }
+    /**
+     * Sets the start position for the Grid 
+     * @param {GridPosition} pos 
+     * @returns {void}
+     */
+    set start(pos) {
+        this.validateGridPos(pos.row, pos.col)
+
+        /* unset end position if there is one */
+        if (this._start) {
+            this._nodes[this._start.key].type = 'open'
+        }
+
+        /**  apply end */
+        this._start = pos
+        this._nodes[pos.key].type = 'start'
     }
 
     /**
@@ -87,23 +87,14 @@ class Grid {
         return this._cols
     }
 
-    /**
-     * returns a string representing the key position of a desired node 
-     * @param {number} row 
-     * @param {number} col 
-     * @returns {string} key 
-     */
-    pos(row, col) {
-        return `${row},${col}`
-    }
 
     /**
      * adds a wall to the position provided 
-     * @param {{row: {number}, col:{number}}} position 
+     * @param {GridPosition} position 
      * @returns {boolean} successfully set 
      */
-    addWall({ row, col }) {
-        const n = this.getNode(row, col)
+    addWall(pos) {
+        const n = this.getNode(pos)
         if (n.type !== 'start' && n.type !== 'end') {
             n.type = 'wall'
             return true // removal successful 
@@ -113,11 +104,11 @@ class Grid {
 
     /**
      * removes a wall from the specified position 
-     * @param {{row: {number}, col:{number}}} param0 
+     * @param {GridPosition} pos 
      * @returns {boolean} successfully removed 
      */
-    removeWall({ row, col }) {
-        const n = this.getNode(row, col)
+    removeWall(pos) {
+        const n = this.getNode(pos)
         if (n.type !== 'start' && n.type !== 'end') {
             n.type = 'open'
             return true // removal successful 
@@ -148,84 +139,84 @@ class Grid {
     // isValidGridPos(row, col) {
     //     return this.isValidRow(row) && this.isValidCol(col)
     // }
-    validateGridPos(row, col) {
-        if (!this.isValidRow(row))
+    /**
+     * checks the provided position and 
+     * throws an error if the position is invalid
+     * @param {GridPosition} pos 
+     */
+    validateGridPos(pos) {
+        if (!this.isValidRow(pos.row))
             throw 'row value is outside of grid'
-        if (!this.isValidCol(col))
+        if (!this.isValidCol(pos.col))
             throw 'col value is outside of grid'
     }
 
     /**
      * validates row position (will throw if invalid) 
      * and returns the GridNode at the specified position 
-     * @param {number} row 
-     * @param {number} col 
+     * @param {GridPosition} pos
+     * @param {boolean} throwOnError
      * @returns {GridNode | null} node | null if invalid Grid position
      */
-    getNode(row, col, throwOnError = true) {
+    getNode(pos, throwOnError = true) {
         // by default will throw error if row is invalid 
         if (throwOnError) {
-            this.validateGridPos(row, col)
-            const p = this.pos(row, col)
-            return this._nodes[p]
+            this.validateGridPos(pos)
+            return this._nodes[pos.key]
         }
         // if throw on error is set to false, will return a 
         // null object instead of a node for an invalid position 
-        if (this.isValidRow(row) && this.isValidCol(col)) {
-            const p = this.pos(row, col)
-            return this._nodes[p]
+        if (this.isValidRow(pos.row) && this.isValidCol(pos.col)) {
+            return this._nodes[pos.key]
         } else return null
     }
 
     /**
      * Returns the adjacent nodes for the provided coordinates 
-     * @param {Grid} grid 
-     * @param {number} row 
-     * @param {number} col 
+     * @param {GridPosition} pos 
      * @returns {GridNode[]} [northNode, eastNode, southNode, westNode]
      */
-    getNeighbors(row, col) {
-        const north = this.getNorth(row, col)
-        const south = this.getSouth(row, col)
-        const east = this.getEast(row, col)
-        const west = this.getWest(row, col)
+    getNeighbors(pos) {
+        const north = this.getNorth(pos)
+        const south = this.getSouth(pos)
+        const east = this.getEast(pos)
+        const west = this.getWest(pos)
 
         return [north, south, east, west]
     }
 
     /**
      * returns the node directly above the node at the row and colum provided 
-     * @param {number} row 
-     * @param {number} col 
+     * @param {GridPosition} pos 
      * @return {GridNode|null}
      */
-    getNorth(row, col) {
-        const n = this.getNode(row + 1, col, false)
+    getNorth(pos) {
+        const p = new GridPosition(pos.row + 1, pos.col)
+        const n = this.getNode(p, false)
         return n
-
     }
 
 
     /**
      * returns the node directly to the right of the node row and column provided 
-     * @param {number} row 
-     * @param {number} col 
+     * @param {GridPosition} pos 
      * @return {GridNode}
      */
-    getEast(row, col) {
-        const n = this.getNode(row, col + 1, false)
+    getEast(pos) {
+        const p = new GridPosition(pos.row, pos.col + 1)
+        const n = this.getNode(p, false)
         return n
     }
 
 
     /**
      * returns the node directly below the node at the row and colum provided 
-     * @param {number} row 
-     * @param {number} col 
+     * @param {GridPosition} pos 
      * @return {GridNode|null}
      */
-    getSouth(row, col) {
-        const n = this.getNode(row - 1, col, false)
+    getSouth(pos) {
+        const p = new GridPosition(pos.row - 1, pos.col + 1)
+        const n = this.getNode(p, false)
         return n
     }
 
@@ -233,12 +224,12 @@ class Grid {
 
     /**
      * returns the node directly to the left of the node row and column provided 
-     * @param {number} row 
-     * @param {number} col 
+     * @param {GridPosition} pos 
      * @return {GridNode|null}
      */
-    getWest(row, col) {
-        const n = this.getNode(row, col - 1, false)
+    getWest(pos) {
+        const p = new GridPosition(pos.row, pos.col - 1)
+        const n = this.getNode(p, false)
         return n
     }
 
