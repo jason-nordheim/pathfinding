@@ -88,8 +88,22 @@ describe('GridNode', () => {
         test('defaults the distance to 0', () => {
             expect(n.distance).toBe(0)
         })
-        test('defaults `.from` to self', () => {
+        test('defaults `.from` to undefined', () => {
             expect(n.from).toBeUndefined()
+        })
+        test('sets the type to "start"', () => {
+            expect(n.type).toBe('start')
+        })
+    })
+    describe('defining end position', () => {
+        const gp = new GridPosition(10, 15)
+        const n = new GridNode(gp, 'end')
+
+        test('defaults the distance to Infinity', () => {
+            expect(n.distance).toBe(Infinity)
+        })
+        test('sets GridNode.type to "end"', () => {
+            expect(n.type).toBe('end')
         })
     })
 })
