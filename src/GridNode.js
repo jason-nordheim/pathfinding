@@ -15,19 +15,21 @@ class GridNode {
         // default properties 
         this._from = from
         this._distance = distance
-        this._type = undefined
+        this._type = type
         this._pos = pos
 
-        if (type === 'open' && !distance) {
+        if (type === 'open' || type === 'end' && !distance) {
             distance = Infinity
         } else if (type === 'start') {
             distance = 0
         }
-
         // apply mutations 
         this.type = type
         this.setPath(distance, from)
     }
+    /**
+     * distance from start node 
+     */
     get distance() {
         return this._distance
     }
