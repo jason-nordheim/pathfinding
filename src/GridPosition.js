@@ -5,6 +5,8 @@ class GridPosition {
      * @param {number} col 
      */
     constructor(row, col) {
+        if (typeof (row) !== 'number' || typeof (col) !== 'number' || row < 0 || col < 0)
+            throw 'row and col must be positive numbers'
         this._row = row
         this._col = col
     }
