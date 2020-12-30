@@ -14,11 +14,17 @@ class GridPosition {
     get row() {
         return this._row
     }
+    set row(r) {
+        throw 'row cannot be mutated'
+    }
     /**
      * @returns {number}
      */
     get col() {
         return this._col
+    }
+    set col(c) {
+        throw 'col cannot be mutated'
     }
     /**
      * @returns {string}
