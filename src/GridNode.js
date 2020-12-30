@@ -29,21 +29,27 @@ class GridNode {
     }
     /**
      * distance from start node 
+     * @returns {number|undefined}
      */
     get distance() {
         return this._distance
     }
+    /**
+     * @returns {GridNode|undefined}
+     */
     get from() {
         return this._from
     }
     /**
      * row placement of node 
+     * @returns {number|undefined}
      */
     get row() {
         return this._row
     }
     /**
      * column placement of node 
+     * @returns {number|undefined}
      */
     get col() {
         return this._col
@@ -58,6 +64,7 @@ class GridNode {
     /**
      * Sets the type of GridNode as a string 
      * @param {string} type 
+     * @returns void 
      */
     set type(t) {
         if (t == 'start') {
@@ -73,6 +80,7 @@ class GridNode {
     }
 
     /**
+     * returns the position of the node 
      * @returns {GridPosition}
      */
     get pos() {
@@ -82,6 +90,7 @@ class GridNode {
      * Defines a path to get back to start 
      * @param {number} distance 
      * @param {GridNode} from 
+     * @returns {void}
      */
     setPath(distance, from) {
         if (from && this.type == 'start' && distance !== 0)
