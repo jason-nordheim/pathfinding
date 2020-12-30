@@ -1,53 +1,38 @@
 const { GridPosition } = require("./GridPosition")
 
 class GridNode {
+    static Types = ['start', 'end', 'open', 'wall']
     /**
      * @param {GridPosition} pos 
      * @param {string} type 
+     * @param {number} distance
+     * @param {GridNode} from 
      */
-    constructor(pos, type = 'open') {
+    constructor(pos, type = 'open', distance = undefined, from = undefined) {
+        if (!pos) throw 'must have position'
+        if (!pos.col || !pos.row) throw 'invalid position'
+
+        // default properties 
+        this._from = from
+        this._distance = distance
+        this._type = undefined
         this._pos = pos
-        this._type = type
-        this._start_dist = Infinity
-        this._end_dist = Infinity
+
+        if (type === 'open' && !distance) {
+            distance = Infinity
+        } else if (type === 'start') {
+            distance = 0
+        }
+
+        // apply mutations 
+        this.type = type
+        this.setPath(distance, from)
     }
-    /**
-     * @returns {number} distance to start node from current node 
-     */
-    get start_dist() {
-        return this._start_dist
-    }
-    /**
-     * sets the distance to the start node 
-     * @param {number} n 
-     */
-    set start_dist(n) {
-        if (typeof (n) !== 'number')
-            throw 'distance must be a number'
-        this._start_dist = n
-    }
-    /**
-     * @returns {number} distance to end node from current node 
-     */
-    get end_dist() {
-        return this._end_dist
-    }
-    /**
-     * sets the distance from the current node to the target/end node 
-     * @param {number} n 
-     */
-    set end_dist(n) {
-        if (typeof (n) !== 'number')
-            throw 'distance must be a number'
-        this._end_dist = n
-    }
-    /**
-     * return an object with the distance from the start node as 
-     * well as a distance from the end node 
-     * @returns {{start:{number}, end:{number}}}
-     */
     get distance() {
-        return { start: this._start_dist, end: this._end_dist }
+        return this._distance
+    }
+    get from() {
+        return this._from
     }
     /**
      * row placement of node 
@@ -70,17 +55,13 @@ class GridNode {
     }
     /**
      * Sets the type of GridNode as a string 
-     * @param {'start'|'end'|'open'|'wall'} type 
+     * @param {string} type 
      */
     set type(t) {
         if (t == 'start') {
             this._type = t
-            this._start_dist = 0
-            this._end_dist = Infinity
         } else if (t == 'end') {
             this._type = t
-            this._start_dist = Infinity
-            this._end_dist = 0
         } else if (t == 'open') {
             this._type = t
         } else if (t == 'wall') {
@@ -96,10 +77,20 @@ class GridNode {
         return this._pos
     }
     /**
-     * @returns {string} key
+     * Defines a path to get back to start 
+     * @param {number} distance 
+     * @param {GridNode} from 
      */
-    get key() {
-        return this._pos.key
+    setPath(distance, from) {
+        if (from && this.type == 'start' && distance !== 0)
+            throw 'start nodes must always have a distance of 0'
+        if (distance && (typeof (distance) !== 'number' || distance < 0))
+            throw 'distance must be a positive number'
+        if (from && distance === 0)
+            throw 'distance cannot be 0 for a defined path'
+
+        this._distance = distance
+        this._from = from ? from : this._from
     }
 }
 exports.GridNode = GridNode
